@@ -1,0 +1,12 @@
+/* custom styles for the todo app */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#todo-table th, #todo-table td {
+    vertical-align: middle;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}

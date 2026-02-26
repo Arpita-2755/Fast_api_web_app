@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUa6mAo2414h3k+yqp/3eyrC6x1p5g2BdK0c5wnA7Xr+Er/5VQ5l5a3XFxle" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">FastAPI Todo</a>
+    </div>
+</nav>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h4>Create / Update Todo</h4>
+            <form id="todo-form">
+                <input type="hidden" id="todo-id">
+                <div class="mb-3">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" required minlength="3">
+                </div>
+                <div class="mb-3">
+                    <label for="desc" class="form-label">Description</label>
+                    <textarea class="form-control" id="desc" rows="3" required minlength="3"></textarea>
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="isComplete">
+                    <label class="form-check-label" for="isComplete">
+                        Completed
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-success" id="submit-btn">Create</button>
+                <button type="button" class="btn btn-secondary" id="cancel-btn" style="display:none;">Cancel</button>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <h4>Your Todos</h4>
+            <table class="table table-hover" id="todo-table">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Done</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HoA3FKFtQ7IC+KRt+R1GXPViroB1lFqIiR2ZF1Ez0ZlL3D7DxG5RBSTC/bd3wLxF" crossorigin="anonymous"></script>
+<script>
+const apiBase = '/api/v1';
+
+async function fetchTodos() {
+    const res = await fetch(`${apiBase}/`);
+    return res.json();
+}
+
+async function renderTodos() {
+    const todos = await fetchTodos();
+    const tbody = document.querySelector('#todo-table tbody');
+    tbody.innerHTML = '';
+    todos.forEach(todo => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${todo.id}</td>
+            <td>${todo.title}</td>
+            <td>${todo.desc}</td>
+            <td>${todo.isComplete ? '✔️' : ''}</td>
+            <td>
+                <button class="btn btn-sm btn-primary me-1" onclick="editTodo(${todo.id})">Edit</button>
+                <button class="btn btn-sm btn-danger" onclick="deleteTodo(${todo.id})">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+async function createTodo(data) {
+    await fetch(`${apiBase}/create`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+}
+
+async function updateTodo(id, data) {
+    await fetch(`${apiBase}/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+}
+
+async function deleteTodo(id) {
+    if (!confirm('Delete this todo?')) return;
+    await fetch(`${apiBase}/${id}`, {method: 'DELETE'});
+    renderTodos();
+}
+
+function resetForm() {
+    document.getElementById('todo-id').value = '';
+    document.getElementById('title').value = '';
+    document.getElementById('desc').value = '';
+    document.getElementById('isComplete').checked = false;
+    document.getElementById('submit-btn').textContent = 'Create';
+    document.getElementById('cancel-btn').style.display = 'none';
+}
+
+window.editTodo = async function(id) {
+    const todos = await fetchTodos();
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+    document.getElementById('todo-id').value = todo.id;
+    document.getElementById('title').value = todo.title;
+    document.getElementById('desc').value = todo.desc;
+    document.getElementById('isComplete').checked = todo.isComplete;
+    document.getElementById('submit-btn').textContent = 'Update';
+    document.getElementById('cancel-btn').style.display = 'inline-block';
+}
+
+document.getElementById('todo-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('todo-id').value;
+    const data = {
+        title: document.getElementById('title').value,
+        desc: document.getElementById('desc').value,
+        isComplete: document.getElementById('isComplete').checked
+    };
+    if (id) {
+        await updateTodo(id, data);
+    } else {
+        await createTodo(data);
+    }
+    resetForm();
+    renderTodos();
+});
+
+document.getElementById('cancel-btn').addEventListener('click', resetForm);
+
+// initial load
+renderTodos();
+</script>
+</body>
+</html>

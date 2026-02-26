@@ -55,7 +55,16 @@ uvicorn main:app --reload
 
 By default the app will run at [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-You can explore the interactive API documentation at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) or the OpenAPI schema at [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json).
+#### Web UI
+A modern, responsive UI is served at the root path. Open your browser to:
+
+```
+http://127.0.0.1:8000/
+```
+
+This page uses Bootstrap and JavaScript to call the same API endpoints behind the scenes, so you can manage todos without external tools.
+
+You can still explore the interactive API documentation at [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) or the OpenAPI schema at [http://127.0.0.1:8000/openapi.json](http://127.0.0.1:8000/openapi.json).
 
 ### API Endpoints
 
