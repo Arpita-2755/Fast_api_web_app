@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Pyright cache
+pyrightconfig.json
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Database
+# ignore the local json file containing todos
+/db.json
+
+# Logs
+*.log
+
+# Mypy
+.mypy_cache/
+
+# Coverage
+htmlcov/
+.coverage
+
+# Pipenv
+Pipfile.lock
+
+# Other
+*.env
