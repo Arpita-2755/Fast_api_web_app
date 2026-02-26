@@ -12,78 +12,122 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
     <div class="container-fluid">
         <a class="navbar-brand" href="#">FastAPI Todo</a>
+        <button class="btn btn-outline-light" id="dark-toggle">🌙</button>
     </div>
 </nav>
 <div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <h4>Create / Update Todo</h4>
-            <form id="todo-form">
-                <input type="hidden" id="todo-id">
-                <div class="mb-3">
-                    <label for="title" class="form-label">Title</label>
-                    <input type="text" class="form-control" id="title" required minlength="3">
-                </div>
-                <div class="mb-3">
-                    <label for="desc" class="form-label">Description</label>
-                    <textarea class="form-control" id="desc" rows="3" required minlength="3"></textarea>
-                </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="isComplete">
-                    <label class="form-check-label" for="isComplete">
-                        Completed
-                    </label>
-                </div>
-                <button type="submit" class="btn btn-success" id="submit-btn">Create</button>
-                <button type="button" class="btn btn-secondary" id="cancel-btn" style="display:none;">Cancel</button>
-            </form>
-        </div>
-        <div class="col-md-6">
-            <h4>Your Todos</h4>
-            <table class="table table-hover" id="todo-table">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Title</th>
-                        <th>Description</th>
-                        <th>Done</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="m-0">Your Todos</h4>
+        <div>
+            <input class="form-control d-inline-block w-auto" id="search-input" placeholder="Search...">
+            <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#todoModal">+ Add Todo</button>
         </div>
     </div>
+    <div class="row" id="todo-list">
+        <!-- cards go here -->
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="todoModal" tabindex="-1" aria-labelledby="todoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="todoModalLabel">Add Todo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="todo-form">
+            <input type="hidden" id="todo-id">
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" required minlength="3">
+            </div>
+            <div class="mb-3">
+                <label for="desc" class="form-label">Description</label>
+                <textarea class="form-control" id="desc" rows="3" required minlength="3"></textarea>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="isComplete">
+                <label class="form-check-label" for="isComplete">
+                    Completed
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary" id="submit-btn">Create</button>
+            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display:none;" data-bs-dismiss="modal">Cancel</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="toast-container"></div>
 </div>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HoA3FKFtQ7IC+KRt+R1GXPViroB1lFqIiR2ZF1Ez0ZlL3D7DxG5RBSTC/bd3wLxF" crossorigin="anonymous"></script>
 <script>
 const apiBase = '/api/v1';
+let todosCache = [];
 
 async function fetchTodos() {
     const res = await fetch(`${apiBase}/`);
-    return res.json();
+    const data = await res.json();
+    todosCache = data;
+    return data;
 }
 
-async function renderTodos() {
-    const todos = await fetchTodos();
-    const tbody = document.querySelector('#todo-table tbody');
-    tbody.innerHTML = '';
-    todos.forEach(todo => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${todo.id}</td>
-            <td>${todo.title}</td>
-            <td>${todo.desc}</td>
-            <td>${todo.isComplete ? '✔️' : ''}</td>
-            <td>
-                <button class="btn btn-sm btn-primary me-1" onclick="editTodo(${todo.id})">Edit</button>
+function showToast(message, type = 'success') {
+    const toastId = `toast-${Date.now()}`;
+    const container = document.getElementById('toast-container');
+    const div = document.createElement('div');
+    div.id = toastId;
+    div.className = `toast align-items-center text-bg-${type} border-0`;
+    div.role = 'alert';
+    div.ariaLive = 'assertive';
+    div.ariaAtomic = 'true';
+    div.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    `;
+    container.appendChild(div);
+    const toast = new bootstrap.Toast(div, { delay: 3000 });
+    toast.show();
+}
+
+function renderCard(todo) {
+    return `
+      <div class="col-md-4 mb-3 todo-card" data-id="${todo.id}">
+        <div class="card ${todo.isComplete ? 'border-success' : ''}">
+          <div class="card-body">
+            <h5 class="card-title">${todo.title}</h5>
+            <p class="card-text">${todo.desc}</p>
+            <div class="d-flex justify-content-between">
+              <div>
+                <button class="btn btn-sm btn-primary me-1" onclick="openEdit(${todo.id})">Edit</button>
                 <button class="btn btn-sm btn-danger" onclick="deleteTodo(${todo.id})">Delete</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+              </div>
+              <div>${todo.isComplete ? '<span class="badge bg-success">Done</span>' : ''}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+}
+
+async function renderTodos(filter = '') {
+    const todos = await fetchTodos();
+    const container = document.getElementById('todo-list');
+    container.innerHTML = '';
+    todos
+      .filter(t => t.title.toLowerCase().includes(filter) || t.desc.toLowerCase().includes(filter))
+      .forEach(todo => container.insertAdjacentHTML('beforeend', renderCard(todo)));
 }
 
 async function createTodo(data) {
@@ -92,6 +136,7 @@ async function createTodo(data) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
     });
+    showToast('Todo created');
 }
 
 async function updateTodo(id, data) {
@@ -100,12 +145,14 @@ async function updateTodo(id, data) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(data)
     });
+    showToast('Todo updated');
 }
 
 async function deleteTodo(id) {
     if (!confirm('Delete this todo?')) return;
     await fetch(`${apiBase}/${id}`, {method: 'DELETE'});
-    renderTodos();
+    showToast('Todo deleted', 'warning');
+    renderTodos(document.getElementById('search-input').value.toLowerCase());
 }
 
 function resetForm() {
@@ -115,11 +162,11 @@ function resetForm() {
     document.getElementById('isComplete').checked = false;
     document.getElementById('submit-btn').textContent = 'Create';
     document.getElementById('cancel-btn').style.display = 'none';
+    document.getElementById('todoModalLabel').textContent = 'Add Todo';
 }
 
-window.editTodo = async function(id) {
-    const todos = await fetchTodos();
-    const todo = todos.find(t => t.id === id);
+function openEdit(id) {
+    const todo = todosCache.find(t => t.id === id);
     if (!todo) return;
     document.getElementById('todo-id').value = todo.id;
     document.getElementById('title').value = todo.title;
@@ -127,6 +174,15 @@ window.editTodo = async function(id) {
     document.getElementById('isComplete').checked = todo.isComplete;
     document.getElementById('submit-btn').textContent = 'Update';
     document.getElementById('cancel-btn').style.display = 'inline-block';
+    document.getElementById('todoModalLabel').textContent = 'Edit Todo';
+    new bootstrap.Modal(document.getElementById('todoModal')).show();
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('bg-dark');
+    document.body.classList.toggle('text-light');
+    const btn = document.getElementById('dark-toggle');
+    btn.textContent = document.body.classList.contains('bg-dark') ? '☀️' : '🌙';
 }
 
 document.getElementById('todo-form').addEventListener('submit', async (e) => {
@@ -143,10 +199,16 @@ document.getElementById('todo-form').addEventListener('submit', async (e) => {
         await createTodo(data);
     }
     resetForm();
-    renderTodos();
+    renderTodos(document.getElementById('search-input').value.toLowerCase());
 });
 
 document.getElementById('cancel-btn').addEventListener('click', resetForm);
+
+document.getElementById('search-input').addEventListener('input', (e) => {
+    renderTodos(e.target.value.toLowerCase());
+});
+
+document.getElementById('dark-toggle').addEventListener('click', toggleDarkMode);
 
 // initial load
 renderTodos();

@@ -3,10 +3,32 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-#todo-table th, #todo-table td {
-    vertical-align: middle;
+.todo-card .card {
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.todo-card .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 .navbar-brand {
     font-weight: bold;
+}
+
+/* dark-mode support */
+body.bg-dark .card {
+    background-color: #343a40;
+    color: #f8f9fa;
+}
+body.bg-dark .modal-content {
+    background-color: #343a40;
+    color: #f8f9fa;
+}
+body.bg-dark .form-control,
+body.bg-dark .form-check-label {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+body.bg-dark .btn-close {
+    filter: invert(1);
 }
