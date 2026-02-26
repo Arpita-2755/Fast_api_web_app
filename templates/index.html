@@ -3,215 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUa6mAo2414h3k+yqp/3eyrC6x1p5g2BdK0c5wnA7Xr+Er/5VQ5l5a3XFxle" crossorigin="anonymous">
+    <title>Todo — Focus & Flow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body class="bg-light">
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">FastAPI Todo</a>
-        <button class="btn btn-outline-light" id="dark-toggle">🌙</button>
+<body>
+    <div class="app-shell">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                        <rect x="9" y="3" width="6" height="4" rx="1"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                </div>
+                <span>Focus & Flow</span>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-filter="all">
+                    <span class="nav-icon">◇</span>
+                    <span>All Tasks</span>
+                    <span class="nav-count" id="count-all">0</span>
+                </button>
+                <button class="nav-item" data-filter="active">
+                    <span class="nav-icon">○</span>
+                    <span>Active</span>
+                    <span class="nav-count" id="count-active">0</span>
+                </button>
+                <button class="nav-item" data-filter="completed">
+                    <span class="nav-icon">✓</span>
+                    <span>Completed</span>
+                    <span class="nav-count" id="count-completed">0</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+                    <span class="theme-icon sun">☀</span>
+                    <span class="theme-icon moon">☽</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main content -->
+        <main class="main">
+            <header class="header">
+                <div class="search-bar">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+                    </svg>
+                    <input type="search" id="search-input" placeholder="Search tasks..." autocomplete="off">
+                </div>
+                <div class="header-actions">
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid" aria-label="Grid view">⊞</button>
+                        <button class="view-btn" data-view="list" aria-label="List view">≡</button>
+                    </div>
+                    <button class="btn-primary" id="add-todo-btn">
+                        <span class="btn-icon">+</span>
+                        New Task
+                    </button>
+                </div>
+            </header>
+
+            <section class="content">
+                <div class="todo-list grid-view" id="todo-list">
+                    <!-- Cards injected here -->
+                </div>
+                <div class="empty-state" id="empty-state" hidden>
+                    <div class="empty-illustration">
+                        <svg viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                            <rect x="40" y="60" width="120" height="80" rx="8"/>
+                            <path d="M60 60V45a20 20 0 0140 0v15"/>
+                            <path d="M70 95h60M70 105h40"/>
+                        </svg>
+                    </div>
+                    <h3>Nothing here yet</h3>
+                    <p>Create your first task to get started</p>
+                    <button class="btn-primary" onclick="document.getElementById('add-todo-btn').click()">
+                        <span class="btn-icon">+</span>
+                        Add Task
+                    </button>
+                </div>
+                <div class="loading-skeleton" id="loading-skeleton">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+            </section>
+        </main>
     </div>
-</nav>
-<div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="m-0">Your Todos</h4>
-        <div>
-            <input class="form-control d-inline-block w-auto" id="search-input" placeholder="Search...">
-            <button class="btn btn-success ms-2" data-bs-toggle="modal" data-bs-target="#todoModal">+ Add Todo</button>
+
+    <!-- Modal -->
+    <div class="modal-backdrop" id="modal-backdrop" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal-content">
+                <header class="modal-header">
+                    <h2 id="modal-title">New Task</h2>
+                    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+                </header>
+                <form id="todo-form">
+                    <input type="hidden" id="todo-id">
+                    <div class="form-group">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" required minlength="3" maxlength="100" placeholder="What needs to be done?">
+                    </div>
+                    <div class="form-group">
+                        <label for="desc">Description</label>
+                        <textarea id="desc" rows="4" required minlength="3" placeholder="Add details..."></textarea>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="isComplete">
+                        <label for="isComplete">Mark as completed</label>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" id="cancel-btn">Cancel</button>
+                        <button type="submit" class="btn-primary" id="submit-btn">
+                            <span class="btn-text">Create Task</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
-    <div class="row" id="todo-list">
-        <!-- cards go here -->
-    </div>
-</div>
 
-<!-- Modal -->
-<div class="modal fade" id="todoModal" tabindex="-1" aria-labelledby="todoModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="todoModalLabel">Add Todo</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="todo-form">
-            <input type="hidden" id="todo-id">
-            <div class="mb-3">
-                <label for="title" class="form-label">Title</label>
-                <input type="text" class="form-control" id="title" required minlength="3">
-            </div>
-            <div class="mb-3">
-                <label for="desc" class="form-label">Description</label>
-                <textarea class="form-control" id="desc" rows="3" required minlength="3"></textarea>
-            </div>
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="isComplete">
-                <label class="form-check-label" for="isComplete">
-                    Completed
-                </label>
-            </div>
-            <button type="submit" class="btn btn-primary" id="submit-btn">Create</button>
-            <button type="button" class="btn btn-secondary" id="cancel-btn" style="display:none;" data-bs-dismiss="modal">Cancel</button>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
+    <!-- Toast container -->
+    <div class="toast-container" id="toast-container" aria-live="polite"></div>
 
-<!-- Toast container -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-  <div id="toast-container"></div>
-</div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HoA3FKFtQ7IC+KRt+R1GXPViroB1lFqIiR2ZF1Ez0ZlL3D7DxG5RBSTC/bd3wLxF" crossorigin="anonymous"></script>
-<script>
-const apiBase = '/api/v1';
-let todosCache = [];
-
-async function fetchTodos() {
-    const res = await fetch(`${apiBase}/`);
-    const data = await res.json();
-    todosCache = data;
-    return data;
-}
-
-function showToast(message, type = 'success') {
-    const toastId = `toast-${Date.now()}`;
-    const container = document.getElementById('toast-container');
-    const div = document.createElement('div');
-    div.id = toastId;
-    div.className = `toast align-items-center text-bg-${type} border-0`;
-    div.role = 'alert';
-    div.ariaLive = 'assertive';
-    div.ariaAtomic = 'true';
-    div.innerHTML = `
-      <div class="d-flex">
-        <div class="toast-body">
-          ${message}
-        </div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-    `;
-    container.appendChild(div);
-    const toast = new bootstrap.Toast(div, { delay: 3000 });
-    toast.show();
-}
-
-function renderCard(todo) {
-    return `
-      <div class="col-md-4 mb-3 todo-card" data-id="${todo.id}">
-        <div class="card ${todo.isComplete ? 'border-success' : ''}">
-          <div class="card-body">
-            <h5 class="card-title">${todo.title}</h5>
-            <p class="card-text">${todo.desc}</p>
-            <div class="d-flex justify-content-between">
-              <div>
-                <button class="btn btn-sm btn-primary me-1" onclick="openEdit(${todo.id})">Edit</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteTodo(${todo.id})">Delete</button>
-              </div>
-              <div>${todo.isComplete ? '<span class="badge bg-success">Done</span>' : ''}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-}
-
-async function renderTodos(filter = '') {
-    const todos = await fetchTodos();
-    const container = document.getElementById('todo-list');
-    container.innerHTML = '';
-    todos
-      .filter(t => t.title.toLowerCase().includes(filter) || t.desc.toLowerCase().includes(filter))
-      .forEach(todo => container.insertAdjacentHTML('beforeend', renderCard(todo)));
-}
-
-async function createTodo(data) {
-    await fetch(`${apiBase}/create`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    showToast('Todo created');
-}
-
-async function updateTodo(id, data) {
-    await fetch(`${apiBase}/${id}`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    showToast('Todo updated');
-}
-
-async function deleteTodo(id) {
-    if (!confirm('Delete this todo?')) return;
-    await fetch(`${apiBase}/${id}`, {method: 'DELETE'});
-    showToast('Todo deleted', 'warning');
-    renderTodos(document.getElementById('search-input').value.toLowerCase());
-}
-
-function resetForm() {
-    document.getElementById('todo-id').value = '';
-    document.getElementById('title').value = '';
-    document.getElementById('desc').value = '';
-    document.getElementById('isComplete').checked = false;
-    document.getElementById('submit-btn').textContent = 'Create';
-    document.getElementById('cancel-btn').style.display = 'none';
-    document.getElementById('todoModalLabel').textContent = 'Add Todo';
-}
-
-function openEdit(id) {
-    const todo = todosCache.find(t => t.id === id);
-    if (!todo) return;
-    document.getElementById('todo-id').value = todo.id;
-    document.getElementById('title').value = todo.title;
-    document.getElementById('desc').value = todo.desc;
-    document.getElementById('isComplete').checked = todo.isComplete;
-    document.getElementById('submit-btn').textContent = 'Update';
-    document.getElementById('cancel-btn').style.display = 'inline-block';
-    document.getElementById('todoModalLabel').textContent = 'Edit Todo';
-    new bootstrap.Modal(document.getElementById('todoModal')).show();
-}
-
-function toggleDarkMode() {
-    document.body.classList.toggle('bg-dark');
-    document.body.classList.toggle('text-light');
-    const btn = document.getElementById('dark-toggle');
-    btn.textContent = document.body.classList.contains('bg-dark') ? '☀️' : '🌙';
-}
-
-document.getElementById('todo-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = document.getElementById('todo-id').value;
-    const data = {
-        title: document.getElementById('title').value,
-        desc: document.getElementById('desc').value,
-        isComplete: document.getElementById('isComplete').checked
-    };
-    if (id) {
-        await updateTodo(id, data);
-    } else {
-        await createTodo(data);
-    }
-    resetForm();
-    renderTodos(document.getElementById('search-input').value.toLowerCase());
-});
-
-document.getElementById('cancel-btn').addEventListener('click', resetForm);
-
-document.getElementById('search-input').addEventListener('input', (e) => {
-    renderTodos(e.target.value.toLowerCase());
-});
-
-document.getElementById('dark-toggle').addEventListener('click', toggleDarkMode);
-
-// initial load
-renderTodos();
-</script>
+    <script src="/static/app.js"></script>
 </body>
 </html>
